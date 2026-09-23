@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  # ============ 基础设施 ============
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: scheduling
+      POSTGRES_USER: sched
+      POSTGRES_PASSWORD: sched123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sched -d scheduling"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ============ 后端 ============
+  backend:
+    build: ./backend
+    environment:
+      SCHED_DATABASE_URL: postgresql+psycopg2://sched:sched123@postgres:5432/scheduling
+      SCHED_REDIS_URL: redis://redis:6379/0
+      SCHED_LLM_PROVIDER: mock
+      SCHED_TMS_BASE_URL: http://localhost:8000/mock/tms
+      SCHED_DEBUG: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app:ro
+    command: sh -c "python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  # ============ 前端 ============
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
