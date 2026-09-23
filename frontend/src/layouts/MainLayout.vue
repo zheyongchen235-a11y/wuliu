@@ -16,6 +16,7 @@
         <a-sub-menu v-if="hasAny(bizMenuKeys)" key="business">
           <template #icon><carry-out-outlined /></template>
           <template #title>调度业务</template>
+          <a-menu-item v-if="hasPerm('business:task:list')" key="agent"><robot-outlined /> 智能调度 Agent</a-menu-item>
           <a-menu-item v-if="hasPerm('business:task:list')" key="tasks">调度任务</a-menu-item>
           <a-menu-item v-if="hasPerm('business:store:list')" key="stores">门店管理</a-menu-item>
           <a-menu-item v-if="hasPerm('business:vehicle:list')" key="vehicles">车辆管理</a-menu-item>
@@ -94,6 +95,7 @@ import {
   MenuFoldOutlined,
   KeyOutlined,
   LogoutOutlined,
+  RobotOutlined,
 } from '@ant-design/icons-vue'
 import { api } from '../api'
 
@@ -106,11 +108,12 @@ const openKeys = ref([])
 
 const user = computed(() => store.state.auth.user)
 const hasPerm = (code) => store.getters['auth/hasPerm'](code)
-const bizMenuKeys = ['tasks', 'stores', 'vehicles', 'routes', 'rules', 'reports']
+const bizMenuKeys = ['agent', 'tasks', 'stores', 'vehicles', 'routes', 'rules', 'reports']
 const sysMenuKeys = ['sys-users', 'sys-roles', 'sys-perms', 'sys-menus', 'sys-depts', 'sys-dicts', 'sys-params', 'sys-logs']
 function hasAny(keys) {
   return keys.some((k) => {
     const map = {
+      agent: 'business:task:list',
       tasks: 'business:task:list',
       stores: 'business:store:list',
       vehicles: 'business:vehicle:list',
@@ -132,6 +135,7 @@ function hasAny(keys) {
 
 const keyToPath = {
   dashboard: '/',
+  agent: '/agent',
   tasks: '/tasks',
   stores: '/stores',
   vehicles: '/vehicles',

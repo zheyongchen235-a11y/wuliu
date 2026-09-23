@@ -14,6 +14,7 @@ const routes = [
     component: MainLayout,
     children: [
       { path: '', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
+      { path: 'agent', name: 'agent', component: () => import('../views/AgentView.vue'), meta: { perm: 'business:task:list' } },
       { path: 'tasks', name: 'tasks', component: () => import('../views/TasksView.vue') },
       { path: 'tasks/:id', name: 'task-detail', component: () => import('../views/TaskDetailView.vue') },
       { path: 'stores', name: 'stores', component: () => import('../views/StoresView.vue') },

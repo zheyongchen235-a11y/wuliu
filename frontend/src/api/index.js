@@ -147,6 +147,7 @@ export const api = {
   confirmTask: (id, data) => http.post(`/scheduling/tasks/${id}/confirm`, data),
   replanTask: (id, data) => http.post(`/scheduling/tasks/${id}/replan`, data),
   getReport: (id) => http.get(`/scheduling/tasks/${id}/report`),
+  getAgentState: (id) => http.get(`/scheduling/tasks/${id}/agent-state`),
   listExceptions: (id) => http.get(`/scheduling/tasks/${id}/exceptions`),
   createException: (id, data) => http.post(`/scheduling/tasks/${id}/exceptions`, data),
   sendExecutionFeedback: (id, data) => http.post(`/scheduling/tasks/${id}/execution-feedback`, data),

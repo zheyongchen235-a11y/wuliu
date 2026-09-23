@@ -7,6 +7,7 @@ import logging
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from ..config import settings
 from ..database import get_db, SessionLocal
 from ..schemas.common import ApiResponse
 from ..schemas.scheduling import (
@@ -63,6 +64,46 @@ def get_task(task_id: str, db: Session = Depends(get_db)):
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return ApiResponse(data=TaskOut.model_validate(task))
+
+
+@router.get("/tasks/{task_id}/agent-state", response_model=ApiResponse[dict])
+def get_agent_state(task_id: str, db: Session = Depends(get_db)):
+    """返回 Agent 工作流实时状态（含 LLM 方案解释）。
+
+    LangGraph 状态保存在 checkpointer 内存中，这里读取后只暴露前端需要的字段，
+    避免把门店/车辆等大快照整体返回。
+    """
+    from ..workflow.graph import get_graph
+
+    task = sched_service.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    values: dict = {}
+    next_nodes: list[str] = []
+    try:
+        snap = get_graph().get_state({"configurable": {"thread_id": task_id}})
+        values = dict(snap.values or {})
+        next_nodes = list(snap.next or [])
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("读取工作流状态失败 task=%s: %s", task_id, exc)
+
+    return ApiResponse(data={
+        "task_id": task_id,
+        "status": task.status,
+        "current_node": task.current_node,
+        "next_nodes": next_nodes,
+        "plan_explanation": values.get("plan_explanation"),
+        "confirmation": values.get("confirmation"),
+        "replan_count": values.get("replan_count", task.replan_count),
+        "validation_errors": values.get("validation_errors") or [],
+        "validation_warnings": values.get("validation_warnings") or [],
+        "candidate_count": len(values.get("candidate_plans") or []),
+        "dispatch_result": values.get("dispatch_result"),
+        "llm_enabled": settings.llm_provider != "mock",
+        "llm_provider": settings.llm_provider,
+        "llm_model": settings.llm_model,
+    })
 
 
 @router.post("/tasks/{task_id}/start", response_model=ApiResponse[dict])

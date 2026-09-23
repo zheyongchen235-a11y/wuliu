@@ -13,6 +13,7 @@ from typing import Any
 
 from .heuristic import (
     COST_PER_TRIP,
+    TERRAIN_ALLOWS,
     VEHICLE_PROFILES,
     _available_vehicles,
     _compose_plan,
@@ -175,7 +176,9 @@ def _optimize_balance_with_cpsat(
 
 
 def _fallback_load_balance_plan(snapshot: dict, config: dict | None) -> dict:
-    """启发式装载率均衡方案：贪心时尽量让每趟接近 max_load 的 80%。"""
+    """启发式装载率均衡方案：贪心时尽量让每趟接近 max_load 的 80%，避免空驶。"""
+    from collections import defaultdict
+
     stores = snapshot.get("stores") or []
     vehicles = snapshot.get("vehicles") or []
     demands_list = snapshot.get("demands") or []
@@ -190,43 +193,44 @@ def _fallback_load_balance_plan(snapshot: dict, config: dict | None) -> dict:
         if not bucket:
             continue
         # 按 terrain 分组，再按车型优先级 4m2 -> big -> small
-        from collections import defaultdict
-
         by_terrain: dict[str, list[dict]] = defaultdict(list)
         for s in bucket:
             by_terrain[s.get("terrain_type", "normal")].append(s)
+
         for vtype in ("4m2", "big", "small"):
             profile = VEHICLE_PROFILES[vtype]
-            served = []
-            for terrain, store_list in list(by_terrain.items()):
-                if vtype in {t for t in ("normal", "mid", "strict") if vtype in _allowed(vtype, t)} and store_list:
+            served: list[dict] = []
+            for terrain, store_list in by_terrain.items():
+                if vtype in TERRAIN_ALLOWS.get(terrain, set()) and store_list:
                     served.extend(store_list)
-                    by_terrain[terrain] = []
             if not served:
                 continue
-            # 贪心：让每车尽量装到 80% max_load
+            # 贪心：让每车尽量装到 80% max_load，装不下的门店跳过并留给后续车型
             target_load = int(profile["max_load"] * 0.8)
-            sorted_stores = sorted(served, key=lambda s: -s["demand"])
-            remaining = list(sorted_stores)
+            remaining = sorted(served, key=lambda s: -s["demand"])
             vs = by_type.get(vtype, [])
             max_trips = profile["am_trips"] if time_window == "AM" else profile["pm_trips"]
-            vi = 0
-            while remaining and vi < len(vs):
-                v = vs[vi]
+            served_ids: set[str] = set()
+            for v in vs:
                 for trip_no in range(1, max_trips + 1):
                     if not remaining:
                         break
-                    if not _vehicle_can_access(v, remaining[0].get("terrain_type", "normal")):
-                        break
                     loaded: list[dict] = []
                     current = 0
-                    while remaining and current < target_load:
-                        s = remaining[0]
-                        if current + s["demand"] > profile["max_load"]:
+                    i = 0
+                    while i < len(remaining):
+                        s = remaining[i]
+                        if not _vehicle_can_access(v, s.get("terrain_type", "normal")):
+                            i += 1
+                            continue
+                        if current >= target_load:
                             break
+                        if current + s["demand"] > profile["max_load"]:
+                            i += 1
+                            continue
                         loaded.append(s)
                         current += s["demand"]
-                        remaining.pop(0)
+                        remaining.pop(i)
                     if loaded and current >= profile["min_load"]:
                         details.append(
                             {
@@ -239,7 +243,12 @@ def _fallback_load_balance_plan(snapshot: dict, config: dict | None) -> dict:
                                 "sequence": len(details) + 1,
                             }
                         )
-                vi += 1
+                        served_ids.update(s["id"] for s in loaded)
+            # 只移除已分配的门店，未分配的回退给后续车型
+            for terrain in list(by_terrain.keys()):
+                by_terrain[terrain] = [
+                    s for s in by_terrain[terrain] if s["id"] not in served_ids
+                ]
 
     return _compose_plan(
         "D",
@@ -249,12 +258,3 @@ def _fallback_load_balance_plan(snapshot: dict, config: dict | None) -> dict:
         details,
         vehicles,
     )
-
-
-def _allowed(vtype: str, terrain: str) -> set:
-    table = {
-        "normal": {"4m2", "big", "small"},
-        "mid": {"big", "small"},
-        "strict": {"small"},
-    }
-    return table.get(terrain, set())

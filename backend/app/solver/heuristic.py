@@ -100,75 +100,65 @@ def _greedy_pack(
 ) -> list[dict]:
     """对一组门店用一组车辆进行贪心装车。
 
+    装车时若当前门店装不下，会跳过它继续尝试后面更小的门店（而不是直接停止），
+    以便尽量贴近 max_load；若最终仍未达 min_load，则把门店放回，留给后续车型。
+
     返回 detail 列表：vehicle_id / trip_no / store_ids / load_amount / sequence
     """
     details: list[dict] = []
     sorted_stores = sorted(stores, key=lambda s: (-s.get("priority", 5), -s["demand"]))
     remaining = list(sorted_stores)
 
-    vehicle_idx = 0
-    while remaining and vehicle_idx < len(vehicles):
-        v = vehicles[vehicle_idx]
+    def _append(v: dict, trip_no: int, loaded: list[dict], load: int) -> None:
+        details.append(
+            {
+                "vehicle_id": v["id"],
+                "vehicle_type": vehicle_type,
+                "trip_no": trip_no,
+                "time_window": time_window,
+                "store_ids": [s["id"] for s in loaded],
+                "load_amount": load,
+                "sequence": len(details) + 1,
+            }
+        )
+
+    for v in vehicles:
+        stop_type = False
         for trip_no in range(1, max_trips_per_vehicle + 1):
             if not remaining:
+                stop_type = True
                 break
-            # 贪心装车，直到达到 max_load 或剩余门店需求为 0
             loaded: list[dict] = []
             current_load = 0
-            while remaining:
-                s = remaining[0]
-                if s["terrain_type"] not in TERRAIN_ALLOWS and not _vehicle_can_access(v, s["terrain_type"]):
-                    # 该门店地形不允许，跳过本车，放到下一车
-                    break
+            i = 0
+            while i < len(remaining):
+                s = remaining[i]
                 if not _vehicle_can_access(v, s["terrain_type"]):
-                    break
+                    i += 1
+                    continue
                 if current_load + s["demand"] > trip_capacity:
-                    # 当前车装不下，尝试下一个门店（小件可能装得下）
-                    # 简化：要求每个门店 demand 不超过单趟容量
-                    if s["demand"] > trip_capacity:
-                        # 单门店需求超出单趟容量，拆分
-                        take = trip_capacity - current_load
-                        if take <= 0:
-                            break
-                        loaded.append({**s, "demand": take})
-                        current_load += take
-                        remaining[0] = {**s, "demand": s["demand"] - take}
-                        continue
-                    break
+                    # 当前门店装不下：跳过，继续尝试后面更小的门店
+                    i += 1
+                    continue
                 loaded.append(s)
                 current_load += s["demand"]
-                remaining.pop(0)
-            if loaded and current_load >= min_load:
-                details.append(
-                    {
-                        "vehicle_id": v["id"],
-                        "vehicle_type": vehicle_type,
-                        "trip_no": trip_no,
-                        "time_window": time_window,
-                        "store_ids": [s["id"] for s in loaded],
-                        "load_amount": current_load,
-                        "sequence": len(details) + 1,
-                    }
-                )
-            elif loaded:
-                # 没达到最低装载量：货量不足保障规则
-                # 若车型为小包/大包，仍允许发车以保障趟次
-                if vehicle_type in ("small", "big") and current_load > 0:
-                    details.append(
-                        {
-                            "vehicle_id": v["id"],
-                            "vehicle_type": vehicle_type,
-                            "trip_no": trip_no,
-                            "time_window": time_window,
-                            "store_ids": [s["id"] for s in loaded],
-                            "load_amount": current_load,
-                            "sequence": len(details) + 1,
-                        }
-                    )
-                else:
-                    # 放回 remaining
-                    remaining = loaded + remaining
-        vehicle_idx += 1
+                remaining.pop(i)
+            if not loaded:
+                # 已无门店可装（装不下或地形不允许），该车型不再尝试
+                stop_type = True
+                break
+            if current_load >= min_load:
+                _append(v, trip_no, loaded, current_load)
+            elif vehicle_type in ("small", "big"):
+                # 未达最低装载量：货量不足时仍保障大包/小包趟次
+                _append(v, trip_no, loaded, current_load)
+            else:
+                # 未达最低装载量且不保障趟次：放回门店，交给后续车型
+                remaining = loaded + remaining
+                stop_type = True
+                break
+        if stop_type:
+            break
     return details
 
 
@@ -191,6 +181,7 @@ def _build_plan(
     plan_id: str,
     name: str,
     solver_type: str = "heuristic",
+    order: list[str] | None = None,
 ) -> dict:
     stores = snapshot.get("stores") or []
     vehicles = snapshot.get("vehicles") or []
@@ -199,7 +190,7 @@ def _build_plan(
 
     grouped = _group_stores(stores, demands_by_store)
     by_type = _available_vehicles(vehicles)
-    priority_types = _strategy_priority(strategy)
+    priority_types = order or _strategy_priority(strategy)
 
     details: list[dict] = []
     for time_window in ("AM", "PM"):
@@ -222,10 +213,9 @@ def _build_plan(
             ]
             if not served_terrains:
                 continue
-            store_pool = []
+            store_pool: list[dict] = []
             for t in served_terrains:
                 store_pool.extend(by_terrain[t])
-                by_terrain[t] = []  # 标记已处理
             if not store_pool:
                 continue
             vs = by_type.get(vtype, [])
@@ -239,6 +229,10 @@ def _build_plan(
                 max_trips_per_vehicle=max_trips,
             )
             details.extend(d)
+            # 只移除已分配的门店；未分配的回退给后续车型，避免门店被静默丢弃
+            served_ids = {sid for det in d for sid in det["store_ids"]}
+            for t in served_terrains:
+                by_terrain[t] = [s for s in by_terrain[t] if s["id"] not in served_ids]
 
     plan = _compose_plan(plan_id, name, strategy, solver_type, details, vehicles)
     return plan
@@ -262,8 +256,8 @@ def _compose_plan(
         max_load = VEHICLE_PROFILES.get(d["vehicle_type"], {}).get("max_load", 1)
         load_rates.append(d["load_amount"] / max_load if max_load else 0.0)
     avg_load_rate = round(sum(load_rates) / len(load_rates), 4) if load_rates else 0.0
-    # 四米二使用率
-    four_two_used = sum(1 for d in details if d["vehicle_type"] == "4m2")
+    # 四米二使用率（按实际投入的车辆数，而非趟次数）
+    four_two_used = len({d["vehicle_id"] for d in details if d["vehicle_type"] == "4m2"})
     four_two_total = sum(1 for v in vehicles if v["vehicle_type"] == "4m2" and v.get("enabled", True))
     four_two_usage = round(four_two_used / four_two_total, 4) if four_two_total else 0.0
     # 大包/小包趟次达成率
@@ -300,10 +294,40 @@ def _count_by_type(details: list[dict]) -> dict:
     return dict(counts)
 
 
+# 车型优先级的所有组合，用于「成本最低」方案遍历择优
+_VEHICLE_TYPE_ORDERS: list[list[str]] = [
+    ["4m2", "big", "small"],
+    ["4m2", "small", "big"],
+    ["big", "4m2", "small"],
+    ["big", "small", "4m2"],
+    ["small", "4m2", "big"],
+    ["small", "big", "4m2"],
+]
+
+
+def _build_cost_min_plan(snapshot: dict) -> dict:
+    """成本最低方案：遍历车型优先级组合，取估算成本最低者。
+
+    单趟成本为 4m2=320 / big=200 / small=120，若仅按「单趟成本」排序优先小包车，
+    会因小包容量小而产生大量半载趟次，反而抬高总成本。因此这里直接以总成本为目标，
+    在所有车型优先级组合中择优，确保该方案确为候选方案中成本最低者。
+    """
+    best: dict | None = None
+    for order in _VEHICLE_TYPE_ORDERS:
+        plan = _build_plan(
+            snapshot, "cost_min", "B", "方案B：成本最低（启发式）", order=order
+        )
+        if best is None or plan["estimated_cost"] < best["estimated_cost"]:
+            best = plan
+    if best is None:  # 理论上不会发生，兜底
+        best = _build_plan(snapshot, "cost_min", "B", "方案B：成本最低（启发式）")
+    return best
+
+
 def generate_heuristic_plans(snapshot: dict, config: dict | None = None) -> list[dict]:
     """生成 A/B/C 三个启发式方案。"""
     return [
         _build_plan(snapshot, "4m2_priority", "A", "方案A：四米二优先（启发式）"),
-        _build_plan(snapshot, "cost_min", "B", "方案B：成本最低（启发式）"),
+        _build_cost_min_plan(snapshot),
         _build_plan(snapshot, "big_small_priority", "C", "方案C：大包/小包趟次保障优先（启发式）"),
     ]
