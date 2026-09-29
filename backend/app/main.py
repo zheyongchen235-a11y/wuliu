@@ -20,6 +20,7 @@ from .api import rules as rules_api
 from .api import scheduling as scheduling_api
 from .api import ws as ws_api
 from .api import auth as auth_api
+from .api import customer as customer_api
 from .api import depts as depts_api
 from .api import dicts as dicts_api
 from .api import logs as logs_api
@@ -28,6 +29,7 @@ from .api import params as params_api
 from .api import permissions as permissions_api
 from .api import roles as roles_api
 from .api import users as users_api
+from .api import wx as wx_api
 from .config import settings
 from .database import SessionLocal, init_db
 from .services.auth import decode_token
@@ -46,6 +48,7 @@ PUBLIC_PATHS = {
     "/health",
     "/api/v1/auth/login",
     "/api/v1/auth/refresh",
+    "/api/v1/wx/login",
 }
 
 # 路由前缀 → 业务模块映射，用于日志归类
@@ -66,6 +69,7 @@ _MODULE_MAP = [
     ("/api/v1/rules", "rule"),
     ("/api/v1/scheduling", "scheduling"),
     ("/api/v1/reports", "report"),
+    ("/api/v1/customer", "customer"),
 ]
 
 
@@ -133,6 +137,7 @@ class AuditLogMiddleware(BaseHTTPMiddleware):
             or path in PUBLIC_PATHS
             or method == "GET"
             or path.startswith("/api/v1/logs")
+            or path.startswith("/api/v1/wx")
         ):
             return await call_next(request)
 
@@ -197,6 +202,13 @@ async def lifespan(app: FastAPI):
         logger.info("RBAC 种子数据已就绪")
     except Exception as e:  # noqa: BLE001
         logger.warning(f"RBAC 种子初始化失败：{e}")
+    # 自动 seed C 端演示数据（幂等；无门店数据时自动跳过）
+    try:
+        from .seed import seed_customer_demo
+
+        seed_customer_demo()
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"C 端演示数据初始化失败：{e}")
     yield
     logger.info("应用关闭")
 
@@ -226,6 +238,8 @@ app.include_router(rules_api.router)
 app.include_router(scheduling_api.router)
 app.include_router(reports_api.router)
 app.include_router(ws_api.router)
+app.include_router(customer_api.router)
+app.include_router(wx_api.router)
 
 # RBAC 路由
 app.include_router(auth_api.router)
@@ -262,6 +276,11 @@ async def root():
             "/api/v1/rules/constraints",
             "/api/v1/scheduling/tasks",
             "/api/v1/reports/attendance",
+            "/api/v1/customer/orders",
+            "/api/v1/customer/wx-users",
+            "/api/v1/customer/payments",
+            "/api/v1/wx/login",
+            "/api/v1/wx/orders",
             "/ws/scheduling/{task_id}",
         ],
     }

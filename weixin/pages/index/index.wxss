@@ -1,0 +1,186 @@
+/* pages/index/index.wxss */
+.header {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  padding: 40rpx 36rpx 96rpx;
+  color: #ffffff;
+  border-radius: 0 0 36rpx 36rpx;
+}
+
+.header .greet {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.header .sub {
+  font-size: 24rpx;
+  opacity: 0.82;
+  margin-top: 10rpx;
+}
+
+.stat-card {
+  margin: -68rpx 28rpx 0;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx 16rpx;
+  display: flex;
+  box-shadow: 0 10rpx 30rpx rgba(30, 60, 114, 0.12);
+  position: relative;
+  z-index: 2;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-item .num {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #1e3c72;
+}
+
+.stat-item .num.warn {
+  color: #e8503a;
+}
+
+.stat-item .num.ok {
+  color: #2f9e44;
+}
+
+.stat-item .label {
+  font-size: 23rpx;
+  color: #8a90a0;
+  margin-top: 8rpx;
+}
+
+.stat-item + .stat-item {
+  border-left: 1rpx solid #eef0f5;
+}
+
+.quick-row {
+  display: flex;
+  margin: 0 28rpx 24rpx;
+}
+
+.quick-item {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 22rpx;
+  padding: 30rpx 0;
+  text-align: center;
+  box-shadow: 0 8rpx 24rpx rgba(30, 60, 114, 0.07);
+}
+
+.quick-item + .quick-item {
+  margin-left: 20rpx;
+}
+
+.quick-item .icon {
+  font-size: 44rpx;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.quick-item .text {
+  font-size: 24rpx;
+  color: #5b6274;
+}
+
+.store-item {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #eef0f5;
+}
+
+.store-item:last-child {
+  border-bottom: none;
+}
+
+.store-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(135deg, #e9f0fd 0%, #dbe6fb 100%);
+  color: #2a5298;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 22rpx;
+  flex-shrink: 0;
+}
+
+.store-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-body .name {
+  font-size: 29rpx;
+  font-weight: 500;
+}
+
+.store-body .addr {
+  font-size: 23rpx;
+  color: #9aa1b0;
+  margin-top: 6rpx;
+}
+
+.store-go {
+  font-size: 24rpx;
+  color: #2a5298;
+  padding-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.order-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #eef0f5;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.order-no {
+  font-size: 23rpx;
+  color: #9aa1b0;
+}
+
+.order-store {
+  font-size: 29rpx;
+  font-weight: 500;
+}
+
+.status-pill {
+  font-size: 22rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 22rpx;
+}
+
+.order-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.order-meta {
+  font-size: 23rpx;
+  color: #9aa1b0;
+}
+
+.loading-tip {
+  text-align: center;
+  color: #9aa1b0;
+  font-size: 24rpx;
+  padding: 40rpx 0;
+}

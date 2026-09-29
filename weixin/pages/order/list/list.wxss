@@ -1,0 +1,105 @@
+/* pages/order/list/list.wxss */
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f4f6fb;
+  padding: 20rpx 24rpx 16rpx;
+  display: flex;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  font-size: 27rpx;
+  color: #5b6274;
+  padding: 14rpx 0;
+  border-radius: 30rpx;
+  background: #e9ecf4;
+  margin: 0 8rpx;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.order-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(30, 60, 114, 0.07);
+}
+
+.order-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.store-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  max-width: 440rpx;
+}
+
+.status-pill {
+  font-size: 22rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 22rpx;
+  flex-shrink: 0;
+}
+
+.order-no {
+  font-size: 23rpx;
+  color: #9aa1b0;
+}
+
+.order-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #5b6274;
+}
+
+.order-info .price {
+  font-size: 32rpx;
+}
+
+.dispatch-row {
+  display: flex;
+  align-items: center;
+  background: #eef2fb;
+  border-radius: 16rpx;
+  padding: 18rpx 22rpx;
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #2a5298;
+}
+
+.dispatch-row .plate {
+  font-weight: 600;
+  margin-right: 20rpx;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20rpx;
+}
+
+.actions button {
+  margin-left: 20rpx;
+  min-width: 160rpx;
+}
+
+.load-more {
+  text-align: center;
+  color: #9aa1b0;
+  font-size: 24rpx;
+  padding: 30rpx 0;
+}

@@ -156,6 +156,17 @@ export const api = {
   attendanceReport: (date) => http.get('/reports/attendance', { params: { date } }),
   loadRateReport: (date) => http.get('/reports/load-rate', { params: { date } }),
   tripAchievementReport: (date) => http.get('/reports/trip-achievement', { params: { date } }),
+
+  // 客户端（微信小程序）业务
+  customerStats: () => http.get('/customer/stats'),
+  listCustomerOrders: (params) => http.get('/customer/orders', { params }),
+  getCustomerOrder: (id) => http.get(`/customer/orders/${id}`),
+  scheduleCustomerOrder: (id, data) => http.post(`/customer/orders/${id}/schedule`, data),
+  updateCustomerOrderStatus: (id, data) => http.put(`/customer/orders/${id}/status`, data),
+  cancelCustomerOrder: (id, data) => http.post(`/customer/orders/${id}/cancel`, data),
+  listWxUsers: (params) => http.get('/customer/wx-users', { params }),
+  updateWxUser: (id, params) => http.put(`/customer/wx-users/${id}`, null, { params }),
+  listPayments: (params) => http.get('/customer/payments', { params }),
 }
 
 export function openProgressSocket(taskId, onMessage) {

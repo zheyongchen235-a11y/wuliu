@@ -1,0 +1,128 @@
+<!-- pages/order/detail/detail.wxml -->
+<view class="page" wx:if="{{order}}">
+  <view class="hero" style="background: linear-gradient(135deg, {{order.status_color}} 0%, {{order.status_color}} 100%);">
+    <view class="status">{{order.status_text}}</view>
+    <view class="desc">{{statusDesc}}</view>
+    <view class="order-no">订单号：{{order.order_no}}</view>
+  </view>
+
+  <!-- 调度结果 -->
+  <view wx:if="{{order.has_dispatch}}" class="dispatch-card">
+    <view class="dispatch-title">🚚 智能调度结果</view>
+    <view class="dispatch-grid">
+      <view class="dispatch-cell">
+        <view class="label">配送车辆</view>
+        <view class="value plate">{{order.plate}}</view>
+      </view>
+      <view class="dispatch-cell">
+        <view class="label">车型</view>
+        <view class="value">{{order.vehicle_type || '-'}}</view>
+      </view>
+      <view class="dispatch-cell">
+        <view class="label">司机</view>
+        <view class="value">{{order.driver_name || '-'}}</view>
+      </view>
+      <view class="dispatch-cell">
+        <view class="label">司机电话</view>
+        <view class="value" bindtap="callDriver" wx:if="{{order.driver_phone}}">
+          <text class="call-btn">📞 {{order.driver_phone}}</text>
+        </view>
+        <view class="value" wx:else>-</view>
+      </view>
+      <view class="dispatch-cell">
+        <view class="label">配送时段</view>
+        <view class="value">{{order.deliver_window_text}}</view>
+      </view>
+      <view class="dispatch-cell">
+        <view class="label">预计送达</view>
+        <view class="value">{{order.estimated_arrival || '待定'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 订单信息 -->
+  <view class="card">
+    <view class="card-title"><text>订单信息</text></view>
+    <view class="info-row">
+      <text class="k">配送门店</text>
+      <text class="v">{{order.store_name}}</text>
+    </view>
+    <view class="info-row">
+      <text class="k">联系人</text>
+      <text class="v">{{order.contact_name || '-'}} {{order.contact_phone || ''}}</text>
+    </view>
+    <view class="info-row">
+      <text class="k">货物</text>
+      <text class="v">{{order.cargo_text}} · {{order.weight}}kg</text>
+    </view>
+    <view class="info-row">
+      <text class="k">配送时段</text>
+      <text class="v">{{order.window_text}}</text>
+    </view>
+    <view class="info-row">
+      <text class="k">期望日期</text>
+      <text class="v">{{order.expect_text}}</text>
+    </view>
+    <view class="info-row">
+      <text class="k">配送距离</text>
+      <text class="v">{{order.distance_km}} km</text>
+    </view>
+    <view class="info-row">
+      <text class="k">备注</text>
+      <text class="v">{{order.remark || '无'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="k">下单时间</text>
+      <text class="v">{{order.created_text}}</text>
+    </view>
+  </view>
+
+  <!-- 费用 -->
+  <view class="card">
+    <view class="card-title"><text>费用</text></view>
+    <view class="info-row">
+      <text class="k">订单金额</text>
+      <text class="v price" style="font-size: 34rpx;">{{order.amount_text}}</text>
+    </view>
+    <view class="info-row">
+      <text class="k">支付状态</text>
+      <text class="v">{{order.paid_text && order.paid_text !== '-' ? '已支付 · ' + order.paid_text : '未支付'}}</text>
+    </view>
+  </view>
+
+  <!-- 支付流水 -->
+  <view class="card" wx:if="{{order.payments.length > 0}}">
+    <view class="card-title"><text>支付流水</text></view>
+    <view wx:for="{{order.payments}}" wx:key="id" class="info-row">
+      <text class="k">{{item.payment_no}}</text>
+      <text class="v">{{item.amount_text}} · {{item.channel_text}}</text>
+    </view>
+  </view>
+
+  <!-- 时间轴 -->
+  <view class="card">
+    <view class="card-title"><text>订单轨迹</text></view>
+    <view wx:for="{{logs}}" wx:key="id" class="timeline-item">
+      <view class="timeline-line" wx:if="{{index !== logs.length - 1}}"></view>
+      <view class="timeline-dot"></view>
+      <view class="timeline-body">
+        <view class="t">{{item.status_text}}</view>
+        <view class="d">{{item.remark || ''}}</view>
+        <view class="d">{{item.created_text}} · {{item.operator_text}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-bottom"></view>
+</view>
+
+<view class="empty" wx:else>
+  <text class="empty-icon">⏳</text>
+  <text>加载中...</text>
+</view>
+
+<view class="bottom-bar" wx:if="{{order}}">
+  <button wx:if="{{order.can_cancel}}" class="btn-ghost btn-sm" bindtap="onCancel">取消订单</button>
+  <button wx:if="{{order.can_pay}}" class="btn-primary btn-sm" bindtap="onPay">去支付</button>
+  <button wx:if="{{order.can_confirm}}" class="btn-primary btn-sm" bindtap="onConfirm">确认收货</button>
+</view>

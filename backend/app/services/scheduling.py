@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -24,6 +25,8 @@ from ..models.scheduling import (
 from ..schemas.scheduling import CreateTaskRequest, ConfirmRequest, ReplanRequest
 from . import rules as rules_service
 from .ws import ws_manager
+
+logger = logging.getLogger(__name__)
 
 
 def create_task(db: Session, req: CreateTaskRequest) -> SchedulingTask:
@@ -121,6 +124,16 @@ def snapshot_task_data(db: Session, task_id: str) -> SchedulingTaskSnapshot:
             demand_by_store[s.id] = 0
         else:
             demand_by_store[s.id] = rng.randint(50, 280)
+
+    # 订单驱动的调度任务：用订单的真实货量覆盖对应门店的随机货量，
+    # 未覆盖的门店保持随机值，从而保留「拼车」效果。
+    task = db.get(SchedulingTask, task_id)
+    overrides = ((task.extra or {}).get("demand_overrides") if task else None) or {}
+    for sid, demand in overrides.items():
+        try:
+            demand_by_store[sid] = int(demand)
+        except (TypeError, ValueError):
+            logger.warning("非法货量覆盖值：store=%s demand=%r", sid, demand)
 
     def _store_to_dict(s: Store) -> dict:
         return {

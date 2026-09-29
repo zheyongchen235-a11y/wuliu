@@ -45,6 +45,13 @@ class Settings(BaseModel):
     tms_base_url: str = Field(default="http://localhost:8000/mock/tms")
     tms_timeout: float = 5.0
 
+    # 微信小程序
+    wx_app_id: str | None = None
+    wx_app_secret: str | None = None
+    wx_mock_login: bool = Field(
+        default=True, description="未配置 appid/secret 时是否允许 mock 登录（由 code 派生 openid）"
+    )
+
     # 求解器
     solver_time_limit_sec: float = 5.0
     solver_max_plans: int = 4
@@ -133,6 +140,9 @@ def get_settings() -> Settings:
         "llm_base_url": llm_base_url,
         "llm_model": llm_model,
         "tms_base_url": os.getenv("SCHED_TMS_BASE_URL", "http://localhost:8000/mock/tms"),
+        "wx_app_id": os.getenv("WX_APP_ID") or None,
+        "wx_app_secret": os.getenv("WX_APP_SECRET") or None,
+        "wx_mock_login": os.getenv("SCHED_WX_MOCK_LOGIN", "true").lower() in ("1", "true", "yes"),
         "solver_time_limit_sec": float(os.getenv("SCHED_SOLVER_TIME_LIMIT_SEC", "5")),
     }
     return Settings(**data)

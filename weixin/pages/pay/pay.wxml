@@ -1,0 +1,70 @@
+<!-- pages/pay/pay.wxml -->
+<view class="page" wx:if="{{order && !paid}}">
+  <view class="pay-hero">
+    <view class="label">待支付金额</view>
+    <view class="amount">{{order.amount_text}}</view>
+    <view class="no">订单号 {{order.order_no}}</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title"><text>订单摘要</text></view>
+    <view class="info-row" style="display:flex;justify-content:space-between;padding:16rpx 0;font-size:27rpx;">
+      <text class="muted">配送门店</text>
+      <text>{{order.store_name}}</text>
+    </view>
+    <view style="display:flex;justify-content:space-between;padding:16rpx 0;font-size:27rpx;">
+      <text class="muted">货物</text>
+      <text>{{order.cargo_text}} · {{order.weight}}kg</text>
+    </view>
+    <view style="display:flex;justify-content:space-between;padding:16rpx 0;font-size:27rpx;">
+      <text class="muted">配送时段</text>
+      <text>{{order.window_text}} · {{order.expect_text}}</text>
+    </view>
+    <view style="display:flex;justify-content:space-between;padding:16rpx 0;font-size:27rpx;">
+      <text class="muted">配送距离</text>
+      <text>{{order.distance_km}} km</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title"><text>支付方式</text></view>
+    <view class="method" data-value="wechat_mock" bindtap="chooseChannel">
+      <view class="method-icon wx">微</view>
+      <view class="method-body">
+        <view class="t">微信支付</view>
+        <view class="d">演示环境 · 模拟支付，不产生真实扣款</view>
+      </view>
+      <view class="radio {{channel === 'wechat_mock' ? 'on' : ''}}"></view>
+    </view>
+    <view class="method" data-value="balance" bindtap="chooseChannel">
+      <view class="method-icon balance">￥</view>
+      <view class="method-body">
+        <view class="t">平台余额</view>
+        <view class="d">演示环境 · 模拟账户余额扣减</view>
+      </view>
+      <view class="radio {{channel === 'balance' ? 'on' : ''}}"></view>
+    </view>
+  </view>
+
+  <button
+    class="btn-primary pay-btn {{paying ? 'btn-disabled' : ''}}"
+    disabled="{{paying}}"
+    bindtap="doPay"
+  >{{paying ? '支付中...' : '确认支付 ' + order.amount_text}}</button>
+
+  <view class="tip">
+    <view>当前为模拟支付，仅生成支付流水记录</view>
+    <view>支付成功后订单将进入「已支付待调度」</view>
+  </view>
+</view>
+
+<view class="card success-box" wx:if="{{paid}}">
+  <view class="success-icon">✓</view>
+  <view class="success-title">支付成功</view>
+  <view class="success-desc">
+    <view>订单已进入「已支付待调度」</view>
+    <view>管理员完成智能排车后，可在订单详情查看车辆与司机</view>
+  </view>
+  <button class="btn-primary pay-btn" bindtap="goDetail">查看订单详情</button>
+  <button class="btn-ghost pay-btn" bindtap="goList">返回订单列表</button>
+</view>

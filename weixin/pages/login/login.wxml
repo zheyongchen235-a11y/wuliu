@@ -1,0 +1,48 @@
+<!-- pages/login/login.wxml -->
+<view class="login-page">
+  <view class="brand">
+    <view class="brand-logo">🚚</view>
+    <view class="brand-title">车辆智能调度</view>
+    <view class="brand-sub">门店订货 · 智能排车 · 配送可视化</view>
+  </view>
+
+  <view class="login-card">
+    <view class="login-card-title">欢迎使用</view>
+    <view class="login-card-desc">使用微信一键登录，无需注册账号与密码</view>
+
+    <view class="feature">
+      <view class="feature-icon">📦</view>
+      <view class="feature-text">
+        <view class="t">在线下单</view>
+        <view class="d">选择门店、填写货量，实时预估运费</view>
+      </view>
+    </view>
+    <view class="feature">
+      <view class="feature-icon">🧠</view>
+      <view class="feature-text">
+        <view class="t">智能排车</view>
+        <view class="d">算法自动分配车辆与司机，拼车更省钱</view>
+      </view>
+    </view>
+    <view class="feature">
+      <view class="feature-icon">📍</view>
+      <view class="feature-text">
+        <view class="t">配送跟踪</view>
+        <view class="d">实时查看车辆、司机与预计到达时间</view>
+      </view>
+    </view>
+
+    <button
+      class="btn-primary login-btn {{loading ? 'btn-disabled' : ''}}"
+      disabled="{{loading}}"
+      bindtap="handleLogin"
+    >
+      <text class="wx-icon">微</text>{{loading ? '登录中...' : '微信一键登录'}}
+    </button>
+
+    <view class="login-tip">
+      <view>登录即代表同意本服务的使用条款</view>
+      <view>当前为演示环境，登录为 mock 模式</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,73 @@
+<!-- pages/order/list/list.wxml -->
+<view class="tabs">
+  <view
+    wx:for="{{tabs}}"
+    wx:key="value"
+    class="tab {{status === item.value ? 'active' : ''}}"
+    data-value="{{item.value}}"
+    bindtap="onTabTap"
+  >{{item.label}}</view>
+</view>
+
+<view class="page" style="padding-top: 0;">
+  <view wx:if="{{!loading && orders.length === 0}}" class="empty">
+    <text class="empty-icon">📭</text>
+    <text>{{status ? '该状态下暂无订单' : '还没有订单'}}</text>
+    <view style="margin-top: 32rpx;">
+      <button class="btn-primary btn-sm" style="width: 240rpx; margin: 0 auto;" bindtap="goCreate">去下单</button>
+    </view>
+  </view>
+
+  <view
+    wx:for="{{orders}}"
+    wx:key="id"
+    class="order-card"
+    data-id="{{item.id}}"
+    bindtap="goDetail"
+  >
+    <view class="order-head">
+      <text class="store-name ellipsis">{{item.store_name}}</text>
+      <text class="status-pill" style="color:{{item.status_color}};background:{{item.status_bg}};">{{item.status_text}}</text>
+    </view>
+    <view class="order-no">{{item.order_no}}</view>
+
+    <view class="order-info">
+      <text>{{item.cargo_text}} · {{item.weight}}kg · {{item.window_text}}</text>
+      <text class="price">{{item.amount_text}}</text>
+    </view>
+    <view class="order-info">
+      <text>期望配送 {{item.expect_text}}</text>
+      <text>{{item.created_text}}</text>
+    </view>
+
+    <view wx:if="{{item.has_dispatch}}" class="dispatch-row">
+      <text class="plate">{{item.plate}}</text>
+      <text>{{item.driver_name || '待分配司机'}} · {{item.deliver_window_text || item.window_text}} · 预计{{item.estimated_arrival || '待定'}}</text>
+    </view>
+
+    <view class="actions" catchtap="noop">
+      <button
+        wx:if="{{item.can_cancel}}"
+        class="btn-ghost btn-sm"
+        data-id="{{item.id}}"
+        catchtap="onCancel"
+      >取消订单</button>
+      <button
+        wx:if="{{item.can_pay}}"
+        class="btn-primary btn-sm"
+        data-id="{{item.id}}"
+        catchtap="onPay"
+      >去支付</button>
+      <button
+        wx:if="{{item.can_confirm}}"
+        class="btn-primary btn-sm"
+        data-id="{{item.id}}"
+        catchtap="onConfirm"
+      >确认收货</button>
+    </view>
+  </view>
+
+  <view wx:if="{{orders.length > 0}}" class="load-more">
+    {{hasMore ? (loadingMore ? '加载中...' : '上拉加载更多') : '没有更多了'}}
+  </view>
+</view>

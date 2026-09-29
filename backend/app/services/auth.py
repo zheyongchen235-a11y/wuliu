@@ -34,7 +34,13 @@ def verify_password(plain: str, hashed: str) -> bool:
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
-def create_access_token(sub: str, expires_minutes: int | None = None, username: str | None = None) -> str:
+def create_access_token(
+    sub: str,
+    expires_minutes: int | None = None,
+    username: str | None = None,
+    scope: str = "admin",
+) -> str:
+    """签发访问令牌。scope=admin 供 RBAC 用户使用，scope=wx 供小程序 C 端用户使用。"""
     minutes = expires_minutes if expires_minutes is not None else settings.jwt_access_token_expire_minutes
     now = datetime.now(timezone.utc)
     payload = {
@@ -42,6 +48,7 @@ def create_access_token(sub: str, expires_minutes: int | None = None, username: 
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(minutes=minutes)).timestamp()),
         "type": "access",
+        "scope": scope,
     }
     if username:
         payload["username"] = username
@@ -170,6 +177,9 @@ def get_current_user(
         raise cred_exc
     payload = decode_token(token)
     if not payload or payload.get("type") != "access":
+        raise cred_exc
+    # C 端（小程序）令牌不得访问管理端接口
+    if payload.get("scope") == "wx":
         raise cred_exc
     user_id = payload.get("sub")
     if not user_id:

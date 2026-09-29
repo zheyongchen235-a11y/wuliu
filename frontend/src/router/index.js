@@ -22,6 +22,10 @@ const routes = [
       { path: 'routes', name: 'routes', component: () => import('../views/RoutesView.vue') },
       { path: 'rules', name: 'rules', component: () => import('../views/RulesView.vue') },
       { path: 'reports', name: 'reports', component: () => import('../views/ReportsView.vue') },
+      // 客户端管理
+      { path: 'customer/orders', name: 'customer-orders', component: () => import('../views/customer/OrdersView.vue'), meta: { perm: 'business:order:list' } },
+      { path: 'customer/wx-users', name: 'customer-wx-users', component: () => import('../views/customer/WxUsersView.vue'), meta: { perm: 'business:customer:list' } },
+      { path: 'customer/payments', name: 'customer-payments', component: () => import('../views/customer/PaymentsView.vue'), meta: { perm: 'business:payment:list' } },
       // 系统管理
       { path: 'system/users', name: 'sys-users', component: () => import('../views/system/UsersView.vue'), meta: { perm: 'system:user:list' } },
       { path: 'system/roles', name: 'sys-roles', component: () => import('../views/system/RolesView.vue'), meta: { perm: 'system:role:list' } },

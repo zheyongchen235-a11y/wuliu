@@ -275,6 +275,11 @@ _PERMISSIONS = [
     ("business:rule:list", "规则查询", "business"),
     ("business:rule:update", "规则编辑", "business"),
     ("business:report:list", "报表查询", "business"),
+    # 客户端（小程序）
+    ("business:customer:list", "小程序用户查询", "business"),
+    ("business:order:list", "客户订单查询", "business"),
+    ("business:order:update", "客户订单操作", "business"),
+    ("business:payment:list", "支付流水查询", "business"),
 ]
 
 
@@ -291,7 +296,10 @@ def _build_menu_tree() -> list[dict]:
         {"id": "m-vehicles", "parent_id": "m-business", "name": "车辆管理", "path": "/vehicles", "component": "VehiclesView", "type": "menu", "sort": 3},
         {"id": "m-routes", "parent_id": "m-business", "name": "线路管理", "path": "/routes", "component": "RoutesView", "type": "menu", "sort": 4},
         {"id": "m-rules", "parent_id": "m-business", "name": "规则配置", "path": "/rules", "component": "RulesView", "type": "menu", "sort": 5},
-        {"id": "m-reports", "parent_id": "m-business", "name": "报表中心", "path": "/reports", "component": "ReportsView", "type": "menu", "sort": 6},
+        {"id": "m-biz-orders", "parent_id": "m-business", "name": "客户订单", "path": "/customer/orders", "component": "customer/OrdersView", "type": "menu", "sort": 6},
+        {"id": "m-biz-wxusers", "parent_id": "m-business", "name": "小程序用户", "path": "/customer/wx-users", "component": "customer/WxUsersView", "type": "menu", "sort": 7},
+        {"id": "m-biz-payments", "parent_id": "m-business", "name": "支付流水", "path": "/customer/payments", "component": "customer/PaymentsView", "type": "menu", "sort": 8},
+        {"id": "m-reports", "parent_id": "m-business", "name": "报表中心", "path": "/reports", "component": "ReportsView", "type": "menu", "sort": 9},
         # 系统子菜单
         {"id": "m-users", "parent_id": "m-system", "name": "用户管理", "path": "/system/users", "component": "system/UsersView", "type": "menu", "sort": 1},
         {"id": "m-roles", "parent_id": "m-system", "name": "角色管理", "path": "/system/roles", "component": "system/RolesView", "type": "menu", "sort": 2},
@@ -373,7 +381,8 @@ def ensure_rbac_seed() -> None:
         # 角色菜单分配
         all_menu_ids = [m["id"] for m in _build_menu_tree()]
         business_menu_ids = [m["id"] for m in _build_menu_tree() if m["id"] in (
-            "m-dashboard", "m-business", "m-tasks", "m-stores", "m-vehicles", "m-routes", "m-rules", "m-reports"
+            "m-dashboard", "m-business", "m-tasks", "m-stores", "m-vehicles", "m-routes", "m-rules",
+            "m-biz-orders", "m-biz-wxusers", "m-biz-payments", "m-reports"
         )]
 
         def sync_menus(role: Role, menu_ids: list[str]) -> None:
@@ -486,6 +495,152 @@ def ensure_rbac_seed() -> None:
     print("RBAC 种子完成：超管 admin/admin123，调度员 dispatcher/dispatcher123，只读 viewer/viewer123")
 
 
+# ---------------- C 端（小程序）演示数据 ----------------
+
+_DEMO_WX_USERS = [
+    ("u-wx-001", "mock_demo0001", "小王便利店", "13800001111"),
+    ("u-wx-002", "mock_demo0002", "老李杂货铺", "13800002222"),
+    ("u-wx-003", "mock_demo0003", "张姐生鲜", "13800003333"),
+]
+
+# (订单号后缀, 用户下标, 门店下标, 货量kg, 状态, 货物类型, 备注)
+_DEMO_ORDERS = [
+    ("0001", 0, 0, 180, "completed", "general", "工作日送货"),
+    ("0002", 0, 1, 260, "delivered", "fresh", "需冷藏运输"),
+    ("0003", 1, 2, 120, "scheduled", "general", None),
+    ("0004", 1, 3, 300, "paid", "bulk", "尽快安排配送"),
+    ("0005", 2, 4, 90, "pending_pay", "fragile", "易碎品轻拿轻放"),
+    ("0006", 2, 5, 150, "cancelled", "general", "用户临时取消"),
+]
+
+_STATUS_CHAIN = {
+    "pending_pay": ["pending_pay"],
+    "paid": ["pending_pay", "paid"],
+    "scheduled": ["pending_pay", "paid", "scheduled"],
+    "delivered": ["pending_pay", "paid", "scheduled", "delivering", "delivered"],
+    "completed": ["pending_pay", "paid", "scheduled", "delivering", "delivered", "completed"],
+    "cancelled": ["pending_pay", "cancelled"],
+}
+
+
+def seed_customer_demo() -> None:
+    """写入 C 端演示数据（小程序用户 / 订单 / 支付流水 / 状态日志）。幂等。"""
+    from .models.customer import CustomerOrder, OrderStatusLog, PaymentRecord, WxUser
+    from .services.order import calc_estimate
+
+    with SessionLocal() as db:
+        if db.query(WxUser).count() > 0:
+            return
+        stores = db.query(Store).filter(Store.enabled.is_(True)).order_by(Store.id).limit(6).all()
+        if len(stores) < 6:
+            print("门店数据不足，跳过 C 端演示数据。请先执行 seed_all()。")
+            return
+
+        users: list[WxUser] = []
+        for uid, openid, nickname, phone in _DEMO_WX_USERS:
+            user = WxUser(
+                id=uid,
+                openid=openid,
+                nickname=nickname,
+                phone=phone,
+                gender=0,
+                enabled=True,
+                last_login_at="2026-09-01T09:00:00+00:00",
+                remark="演示账号",
+            )
+            db.add(user)
+            users.append(user)
+        db.flush()
+
+        # 演示用的车辆与司机（用于已排车/已送达/已完成订单）
+        demo_vehicle = db.query(Vehicle).filter(Vehicle.vehicle_type == "4m2").first()
+        demo_driver = db.get(Driver, demo_vehicle.driver_id) if demo_vehicle and demo_vehicle.driver_id else None
+        if demo_vehicle and demo_driver is None:
+            demo_driver = db.query(Driver).first()
+
+        for suffix, u_idx, s_idx, weight, status, cargo, remark in _DEMO_ORDERS:
+            store = stores[s_idx]
+            est = calc_estimate(store, weight)
+            order = CustomerOrder(
+                id=f"order-demo-{suffix}",
+                order_no=f"SO202609010000{suffix}",
+                wx_user_id=users[u_idx].id,
+                store_id=store.id,
+                store_name=store.name,
+                contact_name=users[u_idx].nickname,
+                contact_phone=users[u_idx].phone,
+                cargo_type=cargo,
+                weight=weight,
+                time_window=est["time_window"],
+                expect_date=date(2026, 9, 1),
+                distance_km=est["distance_km"],
+                amount=est["amount"],
+                remark=remark,
+                status=status,
+                paid_at="2026-09-01T09:05:00+00:00" if status != "pending_pay" else None,
+            )
+            if status in ("scheduled", "delivered", "completed") and demo_vehicle:
+                order.vehicle_id = demo_vehicle.id
+                order.vehicle_type = demo_vehicle.vehicle_type
+                order.plate = demo_vehicle.plate
+                order.driver_id = demo_driver.id if demo_driver else None
+                order.driver_name = demo_driver.name if demo_driver else None
+                order.driver_phone = demo_driver.phone if demo_driver else None
+                order.deliver_window = est["time_window"]
+                order.estimated_arrival = "2026-09-01 12:00" if est["time_window"] == "AM" else "2026-09-01 18:00"
+            if status == "delivered":
+                order.delivered_at = "2026-09-01T11:40:00+00:00"
+            if status == "completed":
+                order.delivered_at = "2026-09-01T11:40:00+00:00"
+                order.completed_at = "2026-09-01T11:55:00+00:00"
+            if status == "cancelled":
+                order.cancelled_at = "2026-09-01T10:20:00+00:00"
+            db.add(order)
+            db.flush()
+
+            if status != "pending_pay":
+                db.add(
+                    PaymentRecord(
+                        id=f"pay-demo-{suffix}",
+                        payment_no=f"PAY202609010000{suffix}",
+                        order_id=order.id,
+                        wx_user_id=order.wx_user_id,
+                        amount=order.amount,
+                        channel="wechat_mock",
+                        status="success" if status != "cancelled" else "refunded",
+                        transaction_id=f"MOCK20260901{suffix}",
+                        paid_at="2026-09-01T09:05:00+00:00",
+                        remark="模拟支付成功" if status != "cancelled" else "订单取消退款",
+                    )
+                )
+
+            prev = None
+            for step_status in _STATUS_CHAIN[status]:
+                db.add(
+                    OrderStatusLog(
+                        id=f"log-demo-{suffix}-{step_status}",
+                        order_id=order.id,
+                        from_status=prev,
+                        to_status=step_status,
+                        operator="user" if step_status in ("pending_pay", "paid", "completed", "cancelled") else "system",
+                        remark={
+                            "pending_pay": "用户提交订单",
+                            "paid": "模拟支付成功",
+                            "scheduled": "已排车",
+                            "delivering": "车辆已发车",
+                            "delivered": "已送达门店",
+                            "completed": "用户确认收货",
+                            "cancelled": "用户取消订单",
+                        }.get(step_status),
+                    )
+                )
+                prev = step_status
+        db.commit()
+
+    print("C 端演示数据完成：3 个小程序用户 + 6 张订单 + 支付流水。")
+
+
 if __name__ == "__main__":
     seed_all()
     ensure_rbac_seed()
+    seed_customer_demo()

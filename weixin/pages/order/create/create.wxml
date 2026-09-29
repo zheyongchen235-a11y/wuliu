@@ -1,0 +1,149 @@
+<!-- pages/order/create/create.wxml -->
+<view class="page">
+  <view class="banner">
+    <view class="t">在线下单 · 一键直达</view>
+    <view class="d">选好门店与货量，系统实时估价，智能调度自动排车</view>
+  </view>
+
+  <!-- 门店 -->
+  <view class="card">
+    <view class="card-title">
+      <text>配送门店</text>
+      <text class="sub">必选</text>
+    </view>
+    <picker
+      mode="selector"
+      range="{{stores}}"
+      range-key="name"
+      value="{{storeIndex}}"
+      bindchange="onStoreChange"
+    >
+      <view class="row-between">
+        <view class="muted">选择门店</view>
+        <view class="picker-value {{store ? '' : 'placeholder'}}">
+          {{store ? store.name + '（' + store.timeText + '）' : '请选择门店'}}<text class="arrow">›</text>
+        </view>
+      </view>
+    </picker>
+    <view wx:if="{{store}}" class="store-badge">
+      📍 {{store.address || '暂无地址'}} · {{store.distanceText || '-'}} · 优先级{{store.priority}}
+    </view>
+  </view>
+
+  <!-- 货物 -->
+  <view class="card">
+    <view class="card-title">
+      <text>货物信息</text>
+      <text class="sub">必选</text>
+    </view>
+    <view class="form-item">
+      <view class="form-label">货物类型</view>
+      <view class="form-value">
+        <view class="chips">
+          <view
+            wx:for="{{cargoOptions}}"
+            wx:key="value"
+            class="chip {{cargoType === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="onCargoTap"
+          >{{item.label}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="form-item">
+      <view class="form-label">货量<text class="required">*</text></view>
+      <input
+        class="form-input"
+        type="number"
+        value="{{weight}}"
+        placeholder="请输入货量（kg）"
+        bindinput="onWeightInput"
+      />
+    </view>
+    <view class="form-item">
+      <view class="form-label">配送时段</view>
+      <view class="form-value">
+        <view class="chips" style="justify-content: flex-end;">
+          <view
+            wx:for="{{windowOptions}}"
+            wx:key="value"
+            class="chip {{timeWindow === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="onWindowTap"
+          >{{item.label}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="form-item">
+      <view class="form-label">期望日期</view>
+      <picker mode="date" value="{{expectDate}}" bindchange="onDateChange">
+        <view class="form-value">{{expectDate}}<text class="arrow">›</text></view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <view class="form-label">联系人</view>
+      <input
+        class="form-input"
+        type="text"
+        value="{{contactName}}"
+        placeholder="默认昵称"
+        bindinput="onContactNameInput"
+      />
+    </view>
+    <view class="form-item">
+      <view class="form-label">联系电话</view>
+      <input
+        class="form-input"
+        type="number"
+        value="{{contactPhone}}"
+        placeholder="请输入手机号"
+        bindinput="onContactPhoneInput"
+      />
+    </view>
+    <view class="form-item">
+      <view class="form-label">备注</view>
+      <input
+        class="form-input"
+        type="text"
+        value="{{remark}}"
+        placeholder="选填"
+        bindinput="onRemarkInput"
+      />
+    </view>
+  </view>
+
+  <!-- 估价 -->
+  <view class="card" wx:if="{{estimate}}">
+    <view class="card-title"><text>费用预估</text></view>
+    <view class="row-between">
+      <view>
+        <view class="estimate-label">预估运费</view>
+        <view class="estimate-amount">{{estimate.amount_text}}</view>
+      </view>
+      <view class="muted">距离 {{estimate.distanceText}}</view>
+    </view>
+    <view class="divider"></view>
+    <view wx:for="{{estimate.breakdown}}" wx:key="label" class="breakdown-row">
+      <text>{{item.label}}</text>
+      <text class="strong">¥{{item.amount_text}}</text>
+    </view>
+    <view class="breakdown-row">
+      <text>配送时段</text>
+      <text class="strong">{{estimate.window_text}}</text>
+    </view>
+  </view>
+
+  <view class="page-bottom"></view>
+</view>
+
+<view class="submit-bar" wx:if="{{store}}">
+  <view class="submit-total">
+    <view class="label">合计（预估）</view>
+    <view class="num">{{estimate ? estimate.amount_text : '--'}}</view>
+  </view>
+  <button
+    class="btn-primary submit-btn {{submitting ? 'btn-disabled' : ''}}"
+    disabled="{{submitting}}"
+    bindtap="submitOrder"
+  >{{submitting ? '提交中...' : '提交订单'}}</button>
+</view>

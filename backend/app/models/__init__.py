@@ -27,6 +27,7 @@ from .scheduling import (
     ReplanRecord,
 )
 from .execution import DispatchRecord, ExceptionEvent
+from .customer import WxUser, CustomerOrder, PaymentRecord, OrderStatusLog
 from .rbac import (
     User,
     Role,
@@ -68,6 +69,10 @@ __all__ = [
     "ReplanRecord",
     "DispatchRecord",
     "ExceptionEvent",
+    "WxUser",
+    "CustomerOrder",
+    "PaymentRecord",
+    "OrderStatusLog",
     "User",
     "Role",
     "Permission",

@@ -1,0 +1,133 @@
+/* pages/order/create/create.wxss */
+.banner {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #ffffff;
+  padding: 36rpx;
+  border-radius: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.banner .t {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.banner .d {
+  font-size: 24rpx;
+  opacity: 0.84;
+  margin-top: 10rpx;
+  line-height: 1.6;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+}
+
+.chip {
+  padding: 12rpx 28rpx;
+  border-radius: 30rpx;
+  background: #f0f3fa;
+  color: #5b6274;
+  font-size: 25rpx;
+  margin: 0 16rpx 16rpx 0;
+}
+
+.chip.active {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #ffffff;
+}
+
+.picker-value {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+}
+
+.picker-value.placeholder {
+  color: #b9bfcc;
+}
+
+.arrow {
+  color: #c8cdd8;
+  font-size: 24rpx;
+  margin-left: 10rpx;
+}
+
+.store-badge {
+  display: flex;
+  align-items: center;
+  background: #eef2fb;
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #2a5298;
+}
+
+.estimate-box {
+  background: linear-gradient(135deg, #fff7f4 0%, #fdeceb 100%);
+  border-radius: 20rpx;
+  padding: 28rpx 30rpx;
+  margin-top: 24rpx;
+}
+
+.estimate-amount {
+  font-size: 52rpx;
+  font-weight: 600;
+  color: #e8503a;
+}
+
+.estimate-label {
+  font-size: 24rpx;
+  color: #9aa1b0;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: #5b6274;
+  margin-top: 14rpx;
+}
+
+.submit-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -6rpx 24rpx rgba(30, 60, 114, 0.08);
+  display: flex;
+  align-items: center;
+}
+
+.submit-total {
+  flex: 1;
+}
+
+.submit-total .label {
+  font-size: 23rpx;
+  color: #9aa1b0;
+}
+
+.submit-total .num {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #e8503a;
+}
+
+.submit-btn {
+  width: 300rpx;
+}
+
+.page-bottom {
+  height: 160rpx;
+}
+
+.required {
+  color: #e8503a;
+  margin-left: 4rpx;
+}

@@ -22,6 +22,9 @@
           <a-menu-item v-if="hasPerm('business:vehicle:list')" key="vehicles">车辆管理</a-menu-item>
           <a-menu-item v-if="hasPerm('business:route:list')" key="routes">线路管理</a-menu-item>
           <a-menu-item v-if="hasPerm('business:rule:list')" key="rules">规则配置</a-menu-item>
+          <a-menu-item v-if="hasPerm('business:order:list')" key="customer-orders">客户订单</a-menu-item>
+          <a-menu-item v-if="hasPerm('business:customer:list')" key="customer-wx-users">小程序用户</a-menu-item>
+          <a-menu-item v-if="hasPerm('business:payment:list')" key="customer-payments">支付流水</a-menu-item>
           <a-menu-item v-if="hasPerm('business:report:list')" key="reports">报表中心</a-menu-item>
         </a-sub-menu>
         <a-sub-menu v-if="hasAny(sysMenuKeys)" key="system">
@@ -108,7 +111,7 @@ const openKeys = ref([])
 
 const user = computed(() => store.state.auth.user)
 const hasPerm = (code) => store.getters['auth/hasPerm'](code)
-const bizMenuKeys = ['agent', 'tasks', 'stores', 'vehicles', 'routes', 'rules', 'reports']
+const bizMenuKeys = ['agent', 'tasks', 'stores', 'vehicles', 'routes', 'rules', 'customer-orders', 'customer-wx-users', 'customer-payments', 'reports']
 const sysMenuKeys = ['sys-users', 'sys-roles', 'sys-perms', 'sys-menus', 'sys-depts', 'sys-dicts', 'sys-params', 'sys-logs']
 function hasAny(keys) {
   return keys.some((k) => {
@@ -119,6 +122,9 @@ function hasAny(keys) {
       vehicles: 'business:vehicle:list',
       routes: 'business:route:list',
       rules: 'business:rule:list',
+      'customer-orders': 'business:order:list',
+      'customer-wx-users': 'business:customer:list',
+      'customer-payments': 'business:payment:list',
       reports: 'business:report:list',
       'sys-users': 'system:user:list',
       'sys-roles': 'system:role:list',
@@ -141,6 +147,9 @@ const keyToPath = {
   vehicles: '/vehicles',
   routes: '/routes',
   rules: '/rules',
+  'customer-orders': '/customer/orders',
+  'customer-wx-users': '/customer/wx-users',
+  'customer-payments': '/customer/payments',
   reports: '/reports',
   'sys-users': '/system/users',
   'sys-roles': '/system/roles',

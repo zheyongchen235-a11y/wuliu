@@ -1,0 +1,174 @@
+/* pages/order/detail/detail.wxss */
+.hero {
+  border-radius: 24rpx;
+  padding: 40rpx 36rpx;
+  color: #ffffff;
+  margin-bottom: 24rpx;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.hero .status {
+  font-size: 40rpx;
+  font-weight: 600;
+}
+
+.hero .desc {
+  font-size: 25rpx;
+  opacity: 0.86;
+  margin-top: 12rpx;
+  line-height: 1.6;
+}
+
+.hero .order-no {
+  font-size: 23rpx;
+  opacity: 0.7;
+  margin-top: 20rpx;
+}
+
+.dispatch-card {
+  background: linear-gradient(135deg, #e9f0fd 0%, #dbe6fb 100%);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.dispatch-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1e3c72;
+  margin-bottom: 24rpx;
+}
+
+.dispatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.dispatch-cell {
+  width: 50%;
+  margin-bottom: 24rpx;
+}
+
+.dispatch-cell .label {
+  font-size: 23rpx;
+  color: #6b7c9e;
+}
+
+.dispatch-cell .value {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e3c72;
+  margin-top: 6rpx;
+}
+
+.dispatch-cell .value.plate {
+  font-size: 34rpx;
+  letter-spacing: 2rpx;
+}
+
+.call-btn {
+  margin-top: 4rpx;
+  display: inline-block;
+  font-size: 24rpx;
+  color: #ffffff;
+  background: #2a5298;
+  border-radius: 26rpx;
+  padding: 8rpx 26rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 18rpx 0;
+  font-size: 27rpx;
+  border-bottom: 1rpx solid #eef0f5;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .k {
+  color: #8a90a0;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.info-row .v {
+  color: #1f2430;
+  text-align: right;
+  flex: 1;
+}
+
+.timeline-item {
+  display: flex;
+  padding-bottom: 30rpx;
+  position: relative;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #d5dbeb;
+  margin-top: 8rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-item:first-child .timeline-dot {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  box-shadow: 0 0 0 8rpx rgba(42, 82, 152, 0.14);
+}
+
+.timeline-line {
+  position: absolute;
+  left: 9rpx;
+  top: 24rpx;
+  bottom: -6rpx;
+  width: 2rpx;
+  background: #e4e8f2;
+}
+
+.timeline-body {
+  flex: 1;
+}
+
+.timeline-body .t {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.timeline-body .d {
+  font-size: 23rpx;
+  color: #9aa1b0;
+  margin-top: 6rpx;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -6rpx 24rpx rgba(30, 60, 114, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.bottom-bar button {
+  margin-left: 20rpx;
+  min-width: 200rpx;
+}
+
+.page-bottom {
+  height: 150rpx;
+}

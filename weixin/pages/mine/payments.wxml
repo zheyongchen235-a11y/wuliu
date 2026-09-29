@@ -1,0 +1,45 @@
+<!-- pages/mine/payments.wxml -->
+<view class="page">
+  <view class="summary">
+    <view class="summary-item">
+      <view class="label">累计支付</view>
+      <view class="num">{{totalAmount}}</view>
+    </view>
+    <view class="summary-item">
+      <view class="label">支付笔数</view>
+      <view class="num">{{total}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && payments.length === 0}}" class="empty">
+    <text class="empty-icon">💳</text>
+    <text>暂无支付流水</text>
+  </view>
+
+  <view wx:for="{{payments}}" wx:key="id" class="pay-card">
+    <view class="pay-head">
+      <text class="pay-channel">{{item.channel_text}}</text>
+      <text class="pay-amount">{{item.amount_text}}</text>
+    </view>
+    <view class="pay-row">
+      <text>流水号</text>
+      <text>{{item.payment_no}}</text>
+    </view>
+    <view class="pay-row">
+      <text>交易号</text>
+      <text>{{item.transaction_id || '-'}}</text>
+    </view>
+    <view class="pay-row">
+      <text>支付时间</text>
+      <text>{{item.paid_text}}</text>
+    </view>
+    <view class="pay-row">
+      <text>状态</text>
+      <text class="{{item.status === 'success' ? 'status-success' : 'status-refunded'}}">{{item.status_text}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{payments.length > 0}}" class="load-more" style="text-align:center;color:#9aa1b0;font-size:24rpx;padding:30rpx 0;">
+    {{hasMore ? '上拉加载更多' : '没有更多了'}}
+  </view>
+</view>
