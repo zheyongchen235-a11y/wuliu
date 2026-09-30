@@ -1,11 +1,15 @@
-# Cloudflare Worker 静态资源托管配置
+# Cloudflare Worker 配置：静态资源托管 + 同源反向代理
 # 项目类型：Worker（含 Static Assets），名称为 wuliu
-# 说明：本文件让 `wrangler deploy` 能找到前端构建产物，无需改用 Pages
 name = "wuliu"
+main = "worker/index.js"
 compatibility_date = "2025-01-01"
 
 [assets]
 # 前端构建产物目录（相对本文件所在的仓库根目录）
 directory = "./frontend/dist"
+# 通过 env.ASSETS 绑定读取静态资源
+binding = "ASSETS"
 # 未命中静态文件时回退到 index.html，兼容前端路由
 not_found_handling = "single-page-application"
+# 先执行 Worker 脚本，由脚本决定走 API 代理还是静态资源
+run_worker_first = true
